@@ -4,17 +4,20 @@ import joblib
 import numpy as np
 
 # Load model and encoders
-model = joblib.load("model.joblib")
-encoders = joblib.load("encoders.joblib")
+model = joblib.load("usedcar_model.pkl")         
+encoders = joblib.load("label_encoder.joblib")   
 
-# Get feature names (assuming stored during training)
-feature_names = model.feature_names_in_  # Only works in sklearn >= 1.0
+# Get feature names (must be stored in model manually if not present)
+try:
+    feature_names = model.feature_names_in_
+except AttributeError:
+    feature_names = list(encoders.keys()) + [col for col in model.feature_importances_ if col not in encoders]
 
-st.title("Used Car Price Predictor")
+st.title("🚗 Used Car Price Predictor")
 
 user_input = {}
 
-# Create form for user inputs
+# Create input UI for each feature
 for feature in feature_names:
     if feature in encoders:
         options = encoders[feature].classes_.tolist()
@@ -24,7 +27,7 @@ for feature in feature_names:
         value = st.number_input(f"Enter {feature}", min_value=0)
         user_input[feature] = value
 
-# Convert to DataFrame
+# Convert input to DataFrame
 input_df = pd.DataFrame([user_input])
 
 # Predict button
