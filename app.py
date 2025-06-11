@@ -5,7 +5,7 @@ import numpy as np
 
 # Load model and encoders
 model = joblib.load("usedcar_model.pkl")         
-encoders = joblib.load("label_encoder(1).joblib")
+encoders = joblib.load("label_encoder.joblib")
 
 # Define feature names manually (must match the training data order)
 feature_names = ['year', 'present_price', 'kms_driven', 'fuel_type', 'seller_type', 'transmission', 'owner']
