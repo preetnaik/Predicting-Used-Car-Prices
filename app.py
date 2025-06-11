@@ -4,33 +4,34 @@ import joblib
 import numpy as np
 
 # Load model and encoders
-model = joblib.load("usedcar_model.pkl")         
-encoders = joblib.load("label_encoder.joblib")   
+model = joblib.load("model.joblib")
+encoders = joblib.load("encoders.joblib")  # should be a dictionary
 
-# Get feature names (must be stored in model manually if not present)
-try:
-    feature_names = model.feature_names_in_
-except AttributeError:
-    feature_names = list(encoders.keys()) + [col for col in model.feature_importances_ if col not in encoders]
+# Safely get feature names (only if the model has feature_names_in_ attribute)
+if hasattr(model, 'feature_names_in_'):
+    feature_names = list(model.feature_names_in_)
+else:
+    feature_names = []  # fallback or raise an error if needed
 
-st.title("🚗 Used Car Price Predictor")
+st.title("Used Car Price Predictor")
 
+# Example of getting user input
 user_input = {}
 
-# Create input UI for each feature
 for feature in feature_names:
     if feature in encoders:
-        options = encoders[feature].classes_.tolist()
-        selected = st.selectbox(f"Select {feature}", options)
-        user_input[feature] = encoders[feature].transform([selected])[0]
+        user_input[feature] = st.selectbox(f"Select {feature}", encoders[feature].classes_)
     else:
-        value = st.number_input(f"Enter {feature}", min_value=0)
-        user_input[feature] = value
+        user_input[feature] = st.text_input(f"Enter {feature}")
 
-# Convert input to DataFrame
+# Convert user input into a DataFrame
 input_df = pd.DataFrame([user_input])
 
-# Predict button
-if st.button("Predict Price"):
-    prediction = model.predict(input_df)[0]
-    st.success(f"Predicted Car Price: ₹ {round(prediction, 2)}")
+# Encode categorical inputs
+for col, encoder in encoders.items():
+    if col in input_df.columns:
+        input_df[col] = encoder.transform(input_df[col])
+
+# Predict
+prediction = model.predict(input_df)[0]
+st.success(f"Predicted Car Price: ₹{prediction:,.2f}")
